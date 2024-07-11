@@ -17,6 +17,7 @@ import {
   Alert,
   IconButton,
   Flex,
+  useToast,
 } from '@chakra-ui/react';
 import axios from 'axios';
 import ContactFormEdit from '../../components/admin/ContactFormEdit'; // Adjust the import path as per your file structure
@@ -27,8 +28,11 @@ const ContactFormList = () => {
   const [entries, setEntries] = useState([]);
   const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
   const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   const [selectedEntry, setSelectedEntry] = useState(null);
+  const [entryToDelete, setEntryToDelete] = useState(null);
   const [isLoading, setLoading] = useState(true);
+  const toast = useToast();
 
   useEffect(() => {
     fetchData();
@@ -45,25 +49,27 @@ const ContactFormList = () => {
     }
   };
 
-  const handleEdit = (id) => {
-    const entry = entries.find((e) => e.id === id);
-    setSelectedEntry(entry);
-    onEditOpen();
-  };
-
   const handleDelete = async (id) => {
     try {
       await axios.delete(`/api/contactform/${id}`);
       fetchData();
+      toast({
+        title: 'Entry deleted successfully',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+      onDeleteClose();
     } catch (error) {
       console.error('Error deleting contact form entry:', error);
+      toast({
+        title: 'An error occurred',
+        description: 'Failed to delete entry',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
     }
-  };
-
-  const handleViewDetails = (id) => {
-    const entry = entries.find((e) => e.id === id);
-    setSelectedEntry(entry);
-    onDetailsOpen();
   };
 
   const handleCloseModals = () => {
@@ -71,10 +77,6 @@ const ContactFormList = () => {
     onDetailsClose();
     setSelectedEntry(null);
   };
-
-  if (isLoading) {
-    return <Box p={4}>Loading...</Box>;
-  }
 
   const formatThaiDate = (dateString) => {
     const date = new Date(dateString);
@@ -85,7 +87,10 @@ const ContactFormList = () => {
     });
     return thaiDateFormatter.format(date);
   };
-  
+
+  if (isLoading) {
+    return <Box p={4}>Loading...</Box>;
+  }
 
   return (
     <Box p={4}>
@@ -110,11 +115,16 @@ const ContactFormList = () => {
                   <IconButton as={Link} to={`mailto:${entry.email}`} variant='ghost'>
                     <Reply />
                   </IconButton>
-                  <IconButton onClick={() => handleDelete(entry.id)} variant='ghost'>
+                  <IconButton
+                    onClick={() => {
+                      setEntryToDelete(entry);
+                      onDeleteOpen();
+                    }}
+                    variant='ghost'
+                  >
                     <X />
                   </IconButton>
                 </Flex>
-
               </Flex>
               <Text>{entry.msg}</Text>
             </Box>
@@ -158,6 +168,26 @@ const ContactFormList = () => {
           <ModalFooter>
             <Button colorScheme="blue" mr={3} onClick={handleCloseModals}>
               Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Confirm Deletion</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>Are you sure you want to delete this entry?</Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="red" onClick={() => handleDelete(entryToDelete.id)}>
+              Delete
+            </Button>
+            <Button ml={3} onClick={onDeleteClose}>
+              Cancel
             </Button>
           </ModalFooter>
         </ModalContent>

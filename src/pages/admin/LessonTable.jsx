@@ -23,8 +23,9 @@ import {
   ModalBody,
   ModalCloseButton,
   Image,
+  ModalFooter,
 } from '@chakra-ui/react';
-import { Edit2, ListCollapse, Plus, X, Search, AlertCircle } from 'lucide-react'; // Assuming lucid-react components
+import { Edit2, Plus, X, Search, AlertCircle } from 'lucide-react'; // Assuming lucid-react components
 import useSWR from 'swr';
 import axios from 'axios';
 import LessonForm from '../../components/admin/LessonForm';
@@ -39,7 +40,9 @@ const LessonTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [lessons, setLessons] = useState([]); // State to store lessons data locally
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState(null);
+  const [lessonToDelete, setLessonToDelete] = useState(null);
   const toast = useToast();
 
   // Fetch lessons data initially
@@ -69,6 +72,7 @@ const LessonTable = () => {
       });
       // Remove deleted lesson from local state
       setLessons(lessons.filter((lesson) => lesson.id !== id));
+      setIsDeleteModalOpen(false); // Close delete modal after deletion
     } catch (error) {
       toast({
         title: 'An error occurred',
@@ -216,7 +220,10 @@ const LessonTable = () => {
                     colorScheme="red"
                     size='sm'
                     aria-label="Delete lesson"
-                    onClick={() => handleDelete(lesson.id)}
+                    onClick={() => {
+                      setLessonToDelete(lesson);
+                      setIsDeleteModalOpen(true);
+                    }}
                   />
                 </Td>
               </Tr>
@@ -264,6 +271,26 @@ const LessonTable = () => {
               onSave={handleSave}
             />
           </ModalBody>
+        </ModalContent>
+      </Modal>
+
+      {/* Confirmation Modal for Deleting Lesson */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Confirm Deletion</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>Are you sure you want to delete this lesson? Evaluation data that related to this lesson will be delete.</Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="red" onClick={() => handleDelete(lessonToDelete.id)}>
+              Delete
+            </Button>
+            <Button ml={3} onClick={() => setIsDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+          </ModalFooter>
         </ModalContent>
       </Modal>
     </Box>
