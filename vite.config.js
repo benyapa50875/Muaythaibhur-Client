@@ -6,8 +6,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': 'http://localhost:3000', // Change this to your Express server's port\
-      '/uploads': 'http://localhost:3000'
+      '/api': 'https://muaythaibhur-server.onrender.com/', // Change this to your Express server's port\
+      '/uploads': 'https://muaythaibhur-server.onrender.com/'
     },
   },
 })
